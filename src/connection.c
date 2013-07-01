@@ -66,6 +66,7 @@ static struct Connection *new_connection();
 static void free_connection(struct Connection *);
 static void print_connection(FILE *, const struct Connection *);
 static void get_peer_address(int, char *, size_t, int *);
+static void log_bad_request(const void *, size_t);
 
 
 void
@@ -365,6 +366,7 @@ handle_connection_client_hello(struct Connection *con) {
     hostname = con->listener->parse_packet(buffer, len);
     if (hostname == NULL) {
         syslog(LOG_INFO, "Request from %s:%d did not include a hostname", peeripstr, peerport);
+        log_bad_request(buffer, len);
     } else {
         syslog(LOG_INFO, "Request for %s from %s:%d", hostname, peeripstr, peerport);
     }
@@ -383,6 +385,22 @@ handle_connection_client_hello(struct Connection *con) {
     }
     con->state = CONNECTED;
 }
+
+static void
+log_bad_request(const void *buffer, size_t len) {
+    char line[80];
+    int i = 0;
+
+    
+    syslog(LOG_DEBUG, "Bad request:");
+    while (i < len) {
+        sprintf(line + 3 * (i % 16), "%02x ", ((const char *)buffer)[i]);
+
+        if (i % 16 == 15) syslog(LOG_DEBUG, line);
+    }
+    syslog(LOG_DEBUG, line);
+}
+
 
 static void
 close_connection(struct Connection *c) {
