@@ -79,14 +79,8 @@ parse_tls_header(const char* data, int data_len) {
     }
 
     tls_version_major = p[1];
-    tls_version_minor = p[2];
     if (tls_version_major < 3) {
-        syslog(LOG_DEBUG, "Receved pre SSL 3.0 handshake");
-        return NULL;
-    }
-
-    if (tls_version_major == 3 && tls_version_minor < 1) {
-        syslog(LOG_DEBUG, "Receved SSL 3.0 handshake");
+        syslog(LOG_DEBUG, "Received pre SSL 3.0 handshake");
         return NULL;
     }
 
@@ -110,6 +104,19 @@ parse_tls_header(const char* data, int data_len) {
         syslog(LOG_DEBUG, "Not a client hello");
         return NULL;
     }
+
+    tls_version_major = p[4];
+    tls_version_minor = p[5];
+    if (tls_version_major < 3) {
+        syslog(LOG_DEBUG, "Received pre SSL 3.0 handshake");
+        return NULL;
+    }
+
+    if (tls_version_major == 3 && tls_version_minor < 1) {
+        syslog(LOG_DEBUG, "Received SSL 3.0 handshake");
+        return NULL;
+    }
+
 
     /* Skip past:
        1	Handshake Type
